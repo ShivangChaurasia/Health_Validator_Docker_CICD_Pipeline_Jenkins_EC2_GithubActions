@@ -13,41 +13,40 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Deploy Application on EC2
+      - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+
           script: |
 
-            # Clone repo if not already present
-            if [ ! -d "Health-Validator-Docker-CICD-Pipeline_Jenkins_EC2_GithubActions" ]; then
-              git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
-            fi
+            # Remove old project if exists
+            rm -rf Health_Validator_Docker_CICD_Pipeline_Jenkins_EC2_GithubActions || true
 
-            # Move into project directory
-            cd Health-Validator-Docker-CICD-Pipeline_Jenkins_EC2_GithubActions
+            # Clone latest repository
+            git clone https://github.com/ShivangChaurasia/Health_Validator_Docker_CICD_Pipeline_Jenkins_EC2_GithubActions.git
 
-            # Pull latest code
-            git pull origin main
+            # Move into project
+            cd Health_Validator_Docker_CICD_Pipeline_Jenkins_EC2_GithubActions
 
-            # Stop old container if exists
+            # Stop existing container
             docker stop healthvalidator-container || true
 
-            # Remove old container
+            # Remove existing container
             docker rm healthvalidator-container || true
 
             # Remove old image
             docker rmi healthvalidator-app || true
 
-            # Build fresh Docker image
+            # Build Docker image
             docker build -t healthvalidator-app .
 
-            # Run container
+            # Run new container
             docker run -d -p 3000:3000 \
               --name healthvalidator-container \
               healthvalidator-app
 
-            # Verify running container
+            # Show running containers
             docker ps
